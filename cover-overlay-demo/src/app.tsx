@@ -61,7 +61,7 @@ import {
 
 /**
  * The design photo (Unsplash Sq8rpq2KB7U), served from public/. DEFAULT_FOCUS is its subject;
- * DEFAULT_FOCUS_MOBILE frames her a quarter in from the left on phones.
+ * DEFAULT_FOCUS_MOBILE frames her about 30% in from the left on phones.
  */
 const DESIGN_PHOTO = "/cover.webp";
 const CENTRE: FocusPoint = { x: 50, y: 50 };

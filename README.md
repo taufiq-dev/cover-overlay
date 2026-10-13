@@ -59,14 +59,14 @@ pnpm run deploy   # builds, then wrangler deploy
 ```tsx
 <CoverOverlay
   imageUrl={coverUrl}
-  imageFocus={{ x: 49.6, y: 80 }}       // desktop framing, in % of the photo's width and height
-  imageFocusMobile={{ x: 63.5, y: 80 }} // optional: lands mid-screen on phones (default: imageFocus)
-  imageZoomMobile={1.8}                 // optional: photo width on phones, × the screen width
-  imageShiftUpMobile="1.5rem"           // optional: moves the phone photo up (negative: down)
-  fadeBandsMobile={5}                   // optional: the phone fade splits the photo into 5 bands…
-  fadeBlackAtBandMobile={4}             // …and is fully faded by the bottom of the 4th
-  fadeColorMobile="#0d0d0d"             // optional: the colour it fades to
-  imageAspectRatio={2800 / 1863}        // sizes the mobile band
+  imageFocus={{ x: 49.6, y: 80 }}         // desktop framing, in % of the photo's width and height
+  imageFocusMobile={{ x: 59.5, y: 81.5 }} // optional: lands mid-screen on phones (default: imageFocus)
+  imageZoomMobile={2}                     // optional: photo width on phones, × the screen width
+  imageShiftUpMobile="1.5rem"             // optional: moves the phone photo up (negative: down)
+  fadeBandsMobile={5}                     // optional: the phone fade splits the photo into 5 bands…
+  fadeBlackAtBandMobile={4}               // …and is fully faded by the bottom of the 4th
+  fadeColorMobile="#0d0d0d"               // optional: the colour it fades to
+  imageAspectRatio={2800 / 1863}          // sizes the mobile band
   title="Welcome aboard"
   titlePosition={OVERLAY_TYPE.TITLE_SIDE}
 >
@@ -76,8 +76,8 @@ pnpm run deploy   # builds, then wrangler deploy
 ```
 
 Leave `imageFocusMobile` out and phones centre the same point as desktop. Set it apart when the
-subject should sit off-centre on phones: the design photo uses a point a quarter-screen to the
-right of her, so she lands a quarter in from the left edge, clear of the centred title.
+subject should sit off-centre on phones: the design photo uses a point a fifth of a screen to the
+right of her, so she lands about 30% in from the left edge, clear of the centred title.
 
 The mobile band starts under the host app's header. Set `--cover-header-height` on any ancestor
 if the header is not `3.5rem` tall.

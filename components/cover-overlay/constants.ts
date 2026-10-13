@@ -46,16 +46,17 @@ export const MOBILE_TITLE = {
 /** Defaults for the design photo (woman in yellow dress, Unsplash Sq8rpq2KB7U). */
 export const DEFAULT_FOCUS: FocusPoint = { x: 49.6, y: 80 };
 /**
- * The design photo on phones: she sits a quarter of the way in from the left, clear of the
- * centred title. The mobile focus is what lands mid-screen, so it is the point a quarter of a
- * screen width to her right: 25% of the screen is 25 / 1.8 = 13.9% of a photo drawn at
- * DEFAULT_ZOOM_MOBILE (1.8), and 49.6 + 13.9 = 63.5. A different zoom moves her.
+ * The design photo on phones: she sits about 30% of the way in from the left, clear of the
+ * centred title. The mobile focus is what lands mid-screen, so it is a point to her right: at
+ * DEFAULT_ZOOM_MOBILE (2) the photo is twice the screen's width, so 59.5 - 49.6 = 9.9% of the
+ * photo is 19.8% of the screen. It is also 1.5% below her centre, which raises her a little
+ * behind the title. A different zoom moves her.
  */
-export const DEFAULT_FOCUS_MOBILE: FocusPoint = { x: 63.5, y: 80 };
+export const DEFAULT_FOCUS_MOBILE: FocusPoint = { x: 59.5, y: 81.5 };
 export const DEFAULT_ASPECT_RATIO = 2800 / 1863;
 
 /** Mobile photo width as a multiple of the screen width (1 = edge to edge, uncropped). */
-export const DEFAULT_ZOOM_MOBILE = 1.8;
+export const DEFAULT_ZOOM_MOBILE = 2;
 /** Moves the mobile photo up from the title's centre (negative: down). Any CSS length. */
 export const DEFAULT_SHIFT_UP_MOBILE = "1.5rem";
 

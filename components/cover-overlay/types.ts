@@ -26,7 +26,7 @@ export type CoverOverlayProps = {
    * photo's mobile framing.
    */
   imageFocusMobile?: FocusPoint;
-  /** Mobile photo width as a multiple of the screen width: 1 is edge to edge. Defaults to 1.8. */
+  /** Mobile photo width as a multiple of the screen width: 1 is edge to edge. Defaults to 2. */
   imageZoomMobile?: number;
   /**
    * Moves the mobile photo up (positive) or down (negative) from the title, as any CSS length;
