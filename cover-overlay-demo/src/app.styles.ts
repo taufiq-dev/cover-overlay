@@ -232,19 +232,25 @@ export const Code = styled.pre`
   line-height: 1.5;
 `;
 
-// Click or drag on the photo to move the focus point. touch-action: none keeps a drag on a phone
-// from scrolling the page instead. The box shrink-wraps the image, so the focus percentages are
+// Click or drag on the photo to move the focus point. Touch scrolling stays on here; only the dot
+// turns it off (see FocusDot). The box shrink-wraps the image, so the focus percentages are
 // percentages of the photo even when a tall one is capped in height and narrower than the card.
-export const Picker = styled.div`
+export const Picker = styled.div<{ $dragging: boolean }>`
   position: relative;
   align-self: center;
   max-width: 100%;
   border-radius: 8px;
   overflow: hidden;
-  cursor: crosshair;
-  touch-action: none;
+  /* Grabbing for the whole drag, even when the pointer runs ahead of the dot. */
+  cursor: ${({ $dragging }) => ($dragging ? "grabbing" : "crosshair")};
   user-select: none;
+  -webkit-user-select: none;
   background: #0d0d0d;
+
+  &:focus-visible {
+    outline: 2px solid ${color.primary};
+    outline-offset: 2px;
+  }
 
   img {
     display: block;
@@ -256,16 +262,52 @@ export const Picker = styled.div`
   }
 `;
 
-export const FocusDot = styled.span`
+/** Diameter of the focus handle, in px. The picker treats a press within it as grabbing the dot. */
+export const FOCUS_DOT_SIZE = 24;
+/** Diameter of the dot's touch area: a finger-sized target around the visible handle. */
+export const FOCUS_DOT_TOUCH_SIZE = 44;
+const FOCUS_DOT_BORDER = 2;
+
+// Hit-testing for "grabbed the dot" is done by distance in FocusPicker; the dot takes pointer
+// events only so that hovering it shows the grab cursor. A ghost dot marks the other layout's
+// point: faded, dashed, and ignored by the pointer. Either may carry a D / M label.
+export const FocusDot = styled.span<{ $dragging: boolean; $ghost: boolean }>`
   position: absolute;
-  width: 18px;
-  height: 18px;
-  margin: -9px 0 0 -9px;
-  border: 2px solid #fff;
+  display: grid;
+  place-items: center;
+  width: ${FOCUS_DOT_SIZE}px;
+  height: ${FOCUS_DOT_SIZE}px;
+  margin: ${-FOCUS_DOT_SIZE / 2}px 0 0 ${-FOCUS_DOT_SIZE / 2}px;
+  border: ${FOCUS_DOT_BORDER}px ${({ $ghost }) => ($ghost ? "dashed" : "solid")} #fff;
   border-radius: 50%;
-  background: rgb(47 95 208 / 0.6);
-  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.5);
-  pointer-events: none;
+  background: ${({ $ghost }) => ($ghost ? "rgb(0 0 0 / 0.35)" : "rgb(47 95 208 / 0.6)")};
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.5),
+    0 2px 6px rgb(0 0 0 / 0.35);
+  opacity: ${({ $ghost }) => ($ghost ? 0.7 : 1)};
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: ${({ $ghost }) => ($ghost ? "none" : "auto")};
+  /* A touch that starts on the dot drags it instead of scrolling the page. */
+  touch-action: none;
+  cursor: ${({ $dragging }) => ($dragging ? "grabbing" : "grab")};
+  transform: scale(${({ $dragging }) => ($dragging ? 1.2 : 1)});
+  transition: transform 120ms ease-out;
+
+  /* The touch area: invisible, centred on the dot, and part of it for hit-testing, so a finger
+     that lands near the handle still gets touch-action: none. Inset from the padding box. */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: ${-(FOCUS_DOT_TOUCH_SIZE - (FOCUS_DOT_SIZE - 2 * FOCUS_DOT_BORDER)) / 2}px;
+    border-radius: 50%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 
 // Label | slider | value, lined up in columns so the knobs scan as a table.

@@ -1,6 +1,6 @@
 import styled, { css } from "styled-components";
 
-import { LAYOUT, MOBILE_TITLE, desktopQuery } from "./constants";
+import { CONTENT_COLUMN, LAYOUT, MOBILE_TITLE, desktopQuery } from "./constants";
 import { OVERLAY_TYPE, type OverlayType } from "./types";
 
 type VariantProps = { $titlePosition: OverlayType };
@@ -24,11 +24,11 @@ export const Layout = styled.div<VariantProps>`
   padding: 0 ${LAYOUT.mobileGutter} 2.5rem;
 
   @media ${desktopQuery} {
-    /* Cards stay ${LAYOUT.contentWidth}px; the gaps share the rest ${LAYOUT.gapLeft} : ${LAYOUT.gapRight},
-       so at 1440px it's exactly ${LAYOUT.gapLeft} | ${LAYOUT.contentWidth} | ${LAYOUT.gapRight}. */
+    /* ${LAYOUT.gapLeft} | ${LAYOUT.contentWidth} | ${LAYOUT.gapRight} at 1440px, the same proportions below it, and
+       above it the cards stay ${LAYOUT.contentWidth}px while the gaps share the rest. */
     grid-template-columns:
       minmax(0, ${LAYOUT.gapLeft}fr)
-      minmax(0, ${LAYOUT.contentWidth}px)
+      ${CONTENT_COLUMN}
       minmax(0, ${LAYOUT.gapRight}fr);
     align-items: start;
     padding: ${LAYOUT.desktopTop} 0;

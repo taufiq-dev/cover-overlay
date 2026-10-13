@@ -1,4 +1,10 @@
-import { DEFAULT_ASPECT_RATIO, DEFAULT_FOCUS } from "./constants";
+import {
+  DEFAULT_ASPECT_RATIO,
+  DEFAULT_FOCUS,
+  DEFAULT_FOCUS_MOBILE,
+  DEFAULT_SHIFT_UP_MOBILE,
+  DEFAULT_ZOOM_MOBILE,
+} from "./constants";
 import { CoverBackground } from "./cover-background";
 import { Content, Layout, Title, Wrapper } from "./styles";
 import { OVERLAY_TYPE, type CoverOverlayProps } from "./types";
@@ -13,7 +19,10 @@ import { OVERLAY_TYPE, type CoverOverlayProps } from "./types";
  */
 const CoverOverlay = ({
   imageUrl,
-  imageFocus = DEFAULT_FOCUS,
+  imageFocus,
+  imageFocusMobile,
+  imageZoomMobile = DEFAULT_ZOOM_MOBILE,
+  imageShiftUpMobile = DEFAULT_SHIFT_UP_MOBILE,
   imageAspectRatio = DEFAULT_ASPECT_RATIO,
   title,
   children,
@@ -23,7 +32,12 @@ const CoverOverlay = ({
   <Wrapper className={className} data-testid="cover-overlay">
     <CoverBackground
       imageUrl={imageUrl}
-      focus={imageFocus}
+      focus={imageFocus ?? DEFAULT_FOCUS}
+      // The design photo's two defaults go together. A caller who sets imageFocus is framing
+      // another photo, where the design photo's mobile offset would mean nothing.
+      focusMobile={imageFocusMobile ?? imageFocus ?? DEFAULT_FOCUS_MOBILE}
+      zoomMobile={imageZoomMobile}
+      shiftUpMobile={imageShiftUpMobile}
       aspectRatio={imageAspectRatio}
       titlePosition={titlePosition}
     />

@@ -47,19 +47,28 @@ Layout changes need a look in a browser on both sides of the 768px breakpoint (`
   photo stays put while the cards scroll over it.
 - **Shared geometry.** `LAYOUT` and `MOBILE_TITLE` in `constants.ts` drive both the page grid
   (`styles.ts`) and the background (`cover-background.tsx`). The desktop grid is
-  `168fr | 634px | 638fr`, and the background derives the empty right-hand area from the same
-  ratio. On mobile, the subject's vertical position is computed from the title's padding,
+  `168fr | CONTENT_COLUMN | 638fr`. `CONTENT_COLUMN` is `min(634px, 634/1440 of the page)`, so
+  below 1440px the cards, both gaps and the side title keep the design's proportions, and above
+  it only the gaps grow. The background derives the empty right-hand area from the same
+  expression. On mobile, the focus point's vertical position is computed from the title's padding,
   font size, line height and line count. **Changing the title's typography moves the photo.**
-- **Focus point.** `imageFocus` becomes `--cover-focus-x/y`. The photo is placed with
+- **Focus points.** `imageFocus` becomes `--cover-focus-x/y` (desktop) and `imageFocusMobile`
+  becomes `--cover-mobile-focus-x/y` (mobile, centred across the screen). `index.tsx` resolves
+  the defaults: mobile falls back to `imageFocus`, and only with neither set to
+  `DEFAULT_FOCUS_MOBILE`, which belongs to the design photo. The photo is placed with
   `translate(-focus)` and `object-position: focus`, which use the same percentages, so the
-  subject's point lands in the same place whether or not `object-fit: cover` crops it.
-- **Mobile band height** is derived from `imageAspectRatio` (`--cover-below-focus`), so the band
-  ends exactly at the photo's bottom edge and the fade lands on the photo, not on empty space. A
-  wrong aspect ratio shows up as a band that is too short or too long.
-- **Tuning knobs** (`--cover-zoom`, `--cover-mobile-zoom`, `--cover-mobile-shift-up`, …) are
-  declared on `Layer`, not on an ancestor, so a host page can't override them by inheritance.
-  The exception is `--cover-header-height`, which is read through a fallback. The desktop knobs
-  only affect `TITLE_SIDE`; `TITLE_TOP` is a plain full-bleed `object-fit: cover`.
+  point lands in the same place whether or not `object-fit: cover` crops it.
+- **Mobile band height** is derived from `imageAspectRatio` and the mobile focus's y
+  (`--cover-below-focus`), so the band ends exactly at the photo's bottom edge and the fade lands
+  on the photo, not on empty space. A wrong aspect ratio shows up as a band that is too short or
+  too long.
+- **Per-photo values are props; layout values are knobs.** The focus points, `imageZoomMobile`
+  and `imageShiftUpMobile` belong to a photo, so they are props, set as inline custom properties
+  on `Layer` (defaults in `constants.ts`). Tuning knobs (`--cover-zoom`, `--cover-fade-width`,
+  `--cover-mobile-fade-end`, …) are declared in `Layer`'s CSS, not on an ancestor, so a host page
+  can't override them by inheritance. The exception is `--cover-header-height`, which is read
+  through a fallback. The desktop knobs only affect `TITLE_SIDE`; `TITLE_TOP` is a plain
+  full-bleed `object-fit: cover`.
 - **`easedRamp()`** builds a 16-stop eased gradient. It is used both as a `mask-image` (where alpha
   means visibility) and as a darkening scrim. A plain two-stop gradient shows banding and a hard
   edge, so don't replace it with one.

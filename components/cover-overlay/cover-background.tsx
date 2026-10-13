@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import styled, { css } from "styled-components";
 
-import { LAYOUT, MOBILE_TITLE, desktopQuery } from "./constants";
+import { CONTENT_COLUMN, LAYOUT, MOBILE_TITLE, desktopQuery } from "./constants";
 import { easedRamp } from "./eased-ramp";
 import { OVERLAY_TYPE, type FocusPoint, type OverlayType } from "./types";
 
@@ -9,8 +9,10 @@ import { OVERLAY_TYPE, type FocusPoint, type OverlayType } from "./types";
  * Decorative photo layer behind CoverOverlay's content. Purely visual (aria-hidden).
  *
  * One uncropped photo for every viewport; all cropping and framing is CSS, tuned with
- * the custom properties on <Layer>. The subject's point in the photo (imageFocus) is
- * passed in as --cover-focus-x / --cover-focus-y so any photo can be framed the same way.
+ * the custom properties on <Layer>. Each layout frames the photo around a focus point,
+ * passed in as percentages of the photo: --cover-focus-x / -y on desktop and
+ * --cover-mobile-focus-x / -y on mobile, so any photo can be framed the same way and
+ * art-directed separately for phones.
  *
  * - Mobile: a photo band under the app header, the subject behind the title, the band
  *   fading to black towards the bottom.
@@ -20,7 +22,7 @@ import { OVERLAY_TYPE, type FocusPoint, type OverlayType } from "./types";
  * - Desktop, title on top: full-bleed photo under a top-to-bottom darkening overlay.
  */
 
-/** Subject's centre below the band top on mobile: title top padding + half the title text. */
+/** Mobile focus point below the band top: title top padding + half the title text. */
 const MOBILE_TITLE_TEXT = MOBILE_TITLE.fontSize * MOBILE_TITLE.lineHeight * MOBILE_TITLE.lines;
 const MOBILE_SUBJECT_TOP = MOBILE_TITLE.paddingTop + MOBILE_TITLE_TEXT / 2;
 
@@ -29,16 +31,31 @@ type CustomProperties = CSSProperties & Record<`--${string}`, string>;
 type CoverBackgroundProps = {
   imageUrl: string;
   focus: FocusPoint;
+  focusMobile: FocusPoint;
+  zoomMobile: number;
+  shiftUpMobile: string;
   aspectRatio: number;
   titlePosition: OverlayType;
 };
 
-export const CoverBackground = ({ imageUrl, focus, aspectRatio, titlePosition }: CoverBackgroundProps) => {
+export const CoverBackground = ({
+  imageUrl,
+  focus,
+  focusMobile,
+  zoomMobile,
+  shiftUpMobile,
+  aspectRatio,
+  titlePosition,
+}: CoverBackgroundProps) => {
   const vars: CustomProperties = {
     "--cover-focus-x": `${focus.x}%`,
     "--cover-focus-y": `${focus.y}%`,
-    /* Photo height below the subject's point, as a fraction of the photo's width. */
-    "--cover-below-focus": `${+((1 - focus.y / 100) / aspectRatio).toFixed(4)}`,
+    "--cover-mobile-focus-x": `${focusMobile.x}%`,
+    "--cover-mobile-focus-y": `${focusMobile.y}%`,
+    "--cover-mobile-zoom": `${zoomMobile}`,
+    "--cover-mobile-shift-up": shiftUpMobile,
+    /* Photo height below the mobile focus point, as a fraction of the photo's width. */
+    "--cover-below-focus": `${+((1 - focusMobile.y / 100) / aspectRatio).toFixed(4)}`,
   };
 
   return (
@@ -68,9 +85,11 @@ const Layer = styled.div`
   --cover-base: #0d0d0d;
 
   /* ---- Desktop ---- */
-  /* Width of the empty area to the right of the cards. */
+  /* Width of the empty area to the right of the cards: the page grid's third column. The
+     percentages resolve where the property is used, against this layer's width, which is the
+     page width the grid's columns are a share of. */
   --cover-space: calc(
-    (100% - ${LAYOUT.contentWidth}px) * ${LAYOUT.gapRight} / ${LAYOUT.gapLeft + LAYOUT.gapRight}
+    (100% - ${CONTENT_COLUMN}) * ${LAYOUT.gapRight} / ${LAYOUT.gapLeft + LAYOUT.gapRight}
   );
   /* How far the photo panel reaches back behind the cards (kept fully hidden there). */
   --cover-lead: min(320px, 25vw);
@@ -86,13 +105,11 @@ const Layer = styled.div`
   /* ---- Mobile ---- */
   /* The band starts under the app header; override --cover-header-height from the page. */
   --cover-mobile-offset: var(--cover-header-height, 3.5rem);
-  /* Photo width as a multiple of the screen width (1 = edge to edge, uncropped). */
-  --cover-mobile-zoom: 1.8;
-  /* Subject's horizontal position, from the left edge. */
-  --cover-mobile-subject-left: 25%;
-  /* Moves the photo up (positive) or down (negative) on mobile; the fade stays put. */
-  --cover-mobile-shift-up: 1.5rem;
-  /* Band top → subject's centre: behind the title, minus the shift. */
+  /* --cover-mobile-zoom (photo width as a multiple of the screen width) and
+     --cover-mobile-shift-up (moves the photo, not the fade) are set inline from the
+     imageZoomMobile / imageShiftUpMobile props, like the focus points: they belong to the
+     photo, not to the layout. */
+  /* Band top → the mobile focus point: behind the title, minus the shift. */
   --cover-mobile-subject-top: calc(${MOBILE_SUBJECT_TOP}px - var(--cover-mobile-shift-up));
   /* Fade to black, measured from the band's top: clear until --cover-mobile-fade-start,
      fully black from --cover-mobile-fade-end down (eased, so no hard edge). */
@@ -158,19 +175,22 @@ const Panel = styled.div<VariantProps>`
 
 const Photo = styled.img<VariantProps>`
   /* Mobile: photo --cover-mobile-zoom x the screen width, bottom-aligned to the band, with
-     the subject --cover-mobile-subject-left in from the left edge. */
+     the mobile focus point centred across the screen. The photo's box keeps the photo's
+     own ratio here, so object-fit crops nothing and the translate alone places the point. */
   display: block;
   position: absolute;
   bottom: 0;
-  left: var(--cover-mobile-subject-left);
+  left: 50%;
   width: calc(var(--cover-mobile-zoom) * 100%);
   height: auto;
   max-width: none;
   object-fit: cover;
-  object-position: var(--cover-focus-x) var(--cover-focus-y);
-  transform: translateX(calc(-1 * var(--cover-focus-x)));
+  object-position: var(--cover-mobile-focus-x) var(--cover-mobile-focus-y);
+  transform: translateX(calc(-1 * var(--cover-mobile-focus-x)));
 
   @media ${desktopQuery} {
+    object-position: var(--cover-focus-x) var(--cover-focus-y);
+
     ${(p) =>
       isSide(p)
         ? css`
