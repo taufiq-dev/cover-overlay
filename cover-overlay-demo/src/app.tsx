@@ -24,7 +24,9 @@ import {
   CardTitle,
   Code,
   Cover,
+  DropCard,
   Field,
+  FileButton,
   FocusDot,
   GroupLabel,
   Heading,
@@ -117,23 +119,30 @@ const useMediaQuery = (query: string): boolean => {
   return useSyncExternalStore(subscribe, () => matchMedia(query).matches);
 };
 
-/** Width / height of the photo at `url`, once it has loaded; null while loading or if it failed. */
-const usePhotoAspectRatio = (url: string): { ratio: number | null; failed: boolean } => {
-  const [measured, setMeasured] = useState<{ url: string; ratio: number | null } | null>(null);
+type PhotoSize = { width: number; height: number };
+
+/**
+ * The natural size of the photo at `url`, once it has loaded; null while loading or if it failed.
+ * Browsers apply EXIF orientation to naturalWidth / naturalHeight, so a phone photo taken in
+ * portrait measures as portrait.
+ */
+const usePhotoSize = (url: string): { size: PhotoSize | null; failed: boolean } => {
+  const [measured, setMeasured] = useState<{ url: string; size: PhotoSize | null } | null>(null);
 
   useEffect(() => {
     let current = true;
     const image = new Image();
-    image.onload = () => current && setMeasured({ url, ratio: image.naturalWidth / image.naturalHeight });
-    image.onerror = () => current && setMeasured({ url, ratio: null });
+    image.onload = () =>
+      current && setMeasured({ url, size: { width: image.naturalWidth, height: image.naturalHeight } });
+    image.onerror = () => current && setMeasured({ url, size: null });
     image.src = url;
     return () => {
       current = false;
     };
   }, [url]);
 
-  if (measured?.url !== url) return { ratio: null, failed: false };
-  return { ratio: measured.ratio, failed: measured.ratio === null };
+  if (measured?.url !== url) return { size: null, failed: false };
+  return { size: measured.size, failed: measured.size === null };
 };
 
 const toPercent = (offset: number, size: number): number =>
@@ -178,7 +187,11 @@ const App = () => {
   const [titlePosition, setTitlePosition] = useState<OverlayType>(OVERLAY_TYPE.TITLE_SIDE);
   const [title, setTitle] = useState(DEFAULT_TITLE);
   const [imageUrl, setImageUrl] = useState(DESIGN_PHOTO);
+  // The file name when the photo was uploaded; imageUrl is then an object URL.
+  const [uploadName, setUploadName] = useState<string | null>(null);
   const [draftUrl, setDraftUrl] = useState("");
+  const [dropping, setDropping] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [focus, setFocus] = useState<FocusPoint>(DEFAULT_FOCUS);
   const [headerOn, setHeaderOn] = useState(true);
   const [headerHeight, setHeaderHeight] = useState(56);
@@ -187,10 +200,24 @@ const App = () => {
   const [knobDefaults, setKnobDefaults] = useState<Record<string, number>>({});
   const [overrides, setOverrides] = useState<Record<string, number>>({});
 
-  const photo = usePhotoAspectRatio(imageUrl);
+  const photo = usePhotoSize(imageUrl);
+  const aspectRatio = photo.size ? photo.size.width / photo.size.height : null;
 
   // Read before any override exists, so these are the component's own values.
   useLayoutEffect(() => setKnobDefaults(readKnobDefaults()), []);
+
+  // An uploaded photo holds its file in memory until its object URL is revoked: release it once
+  // another photo replaces it.
+  useEffect(() => {
+    if (!imageUrl.startsWith("blob:")) return;
+    return () => URL.revokeObjectURL(imageUrl);
+  }, [imageUrl]);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   const setKnob = (name: string, value: number) =>
     setOverrides(({ [name]: _previous, ...rest }) =>
@@ -207,20 +234,30 @@ const App = () => {
     const url = draftUrl.trim();
     if (!url) return;
     setImageUrl(url);
+    setUploadName(null);
     // A focus point belongs to one photo; the design photo's would be arbitrary on another.
+    setFocus(CENTRE);
+  };
+
+  // The file never leaves the tab: an object URL points at it in memory, and nothing is uploaded.
+  const applyFile = (file: File | undefined) => {
+    if (!file) return;
+    setImageUrl(URL.createObjectURL(file));
+    setUploadName(file.name);
     setFocus(CENTRE);
   };
 
   const applyDesignPhoto = () => {
     setImageUrl(DESIGN_PHOTO);
+    setUploadName(null);
     setFocus(DEFAULT_FOCUS);
   };
 
   const usage = [
     "<CoverOverlay",
-    `  imageUrl=${JSON.stringify(imageUrl)}`,
+    uploadName ? `  imageUrl={photoUrl} // ${uploadName}` : `  imageUrl=${JSON.stringify(imageUrl)}`,
     `  imageFocus={{ x: ${focus.x}, y: ${focus.y} }}`,
-    photo.ratio !== null && `  imageAspectRatio={${+photo.ratio.toFixed(4)}}`,
+    aspectRatio !== null && `  imageAspectRatio={${+aspectRatio.toFixed(4)}}`,
     title && `  title=${JSON.stringify(title)}`,
     `  titlePosition={OVERLAY_TYPE.${titlePosition === OVERLAY_TYPE.TITLE_SIDE ? "TITLE_SIDE" : "TITLE_TOP"}}`,
     ">",
@@ -229,6 +266,12 @@ const App = () => {
   ]
     .filter(Boolean)
     .join("\n");
+
+  const copyUsage = () =>
+    navigator.clipboard.writeText(usage).then(
+      () => setCopied(true),
+      () => {},
+    );
 
   const shellVars: CustomProperties = {
     "--cover-header-height": headerOn ? `${headerHeight}px` : "0px",
@@ -242,7 +285,7 @@ const App = () => {
       <Cover
         imageUrl={imageUrl}
         imageFocus={focus}
-        imageAspectRatio={photo.ratio ?? undefined}
+        imageAspectRatio={aspectRatio ?? undefined}
         title={title}
         titlePosition={titlePosition}
       >
@@ -251,7 +294,7 @@ const App = () => {
           <Lead>
             This page is a <Mono>&lt;CoverOverlay&gt;</Mono>, and these cards are its children. Resize
             across {COVER_BREAKPOINT}px, or open it on a phone, to see the mobile band and the two desktop
-            layouts.
+            layouts. Upload your own photo below to find its focus point.
           </Lead>
           <div>
             Layout now:{" "}
@@ -265,6 +308,109 @@ const App = () => {
             )}
           </div>
         </Card>
+
+        <DropCard
+          $dropping={dropping}
+          onDragOver={(event) => {
+            if (!event.dataTransfer.types.includes("Files")) return;
+            event.preventDefault();
+            setDropping(true);
+          }}
+          // dragleave also fires when the pointer moves onto a child; only leaving the card counts.
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropping(false);
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            setDropping(false);
+            applyFile(event.dataTransfer.files[0]);
+          }}
+        >
+          <CardTitle>
+            Photo
+            <Button
+              type="button"
+              $variant="secondary"
+              onClick={() => setFocus(imageUrl === DESIGN_PHOTO ? DEFAULT_FOCUS : CENTRE)}
+            >
+              Reset focus
+            </Button>
+          </CardTitle>
+          <Row>
+            <FileButton>
+              Upload photo…
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  applyFile(event.target.files?.[0]);
+                  // Cleared so that choosing the same file again still fires change.
+                  event.target.value = "";
+                }}
+              />
+            </FileButton>
+            <Button
+              type="button"
+              $variant="secondary"
+              onClick={applyDesignPhoto}
+              disabled={imageUrl === DESIGN_PHOTO}
+            >
+              Design photo
+            </Button>
+          </Row>
+          <form onSubmit={applyCustomPhoto}>
+            <Row>
+              <WideField>
+                or a URL
+                <input
+                  type="url"
+                  placeholder="https://… (any uncropped photo)"
+                  value={draftUrl}
+                  onChange={(event) => setDraftUrl(event.target.value)}
+                />
+              </WideField>
+              <Button type="submit" $variant="secondary" disabled={!draftUrl.trim()}>
+                Use
+              </Button>
+            </Row>
+          </form>
+          <Note>
+            You can also drop an image on this card. An uploaded photo stays in this browser tab: nothing
+            is sent anywhere.
+          </Note>
+          <div>
+            {photo.failed ? (
+              <Muted>
+                Could not load this photo
+                {uploadName ? " — this browser may not support its format (HEIC, for example)" : ""}.
+              </Muted>
+            ) : photo.size === null || aspectRatio === null ? (
+              <Muted>Loading…</Muted>
+            ) : (
+              <>
+                {uploadName && (
+                  <>
+                    <Mono>{uploadName}</Mono> ·{" "}
+                  </>
+                )}
+                {photo.size.width} × {photo.size.height} px · imageAspectRatio{" "}
+                <Mono>{aspectRatio.toFixed(4)}</Mono>
+              </>
+            )}
+          </div>
+          {!photo.failed && <FocusPicker src={imageUrl} focus={focus} onChange={setFocus} />}
+          <Note>Click or drag on the photo to mark the subject. The background frames it from that point.</Note>
+          <Sliders>
+            {(["x", "y"] as const).map((axis) => (
+              <FocusSlider
+                key={axis}
+                axis={axis}
+                value={focus[axis]}
+                onChange={(value) => setFocus((previous) => ({ ...previous, [axis]: value }))}
+              />
+            ))}
+          </Sliders>
+        </DropCard>
 
         <Card>
           <CardTitle>Props</CardTitle>
@@ -289,67 +435,6 @@ const App = () => {
               <input type="text" value={title} onChange={(event) => setTitle(event.target.value)} />
             </WideField>
           </Row>
-          <form onSubmit={applyCustomPhoto}>
-            <Row>
-              <WideField>
-                imageUrl
-                <input
-                  type="url"
-                  placeholder="https://… (any uncropped photo)"
-                  value={draftUrl}
-                  onChange={(event) => setDraftUrl(event.target.value)}
-                />
-              </WideField>
-              <Button type="submit" disabled={!draftUrl.trim()}>
-                Use
-              </Button>
-              <Button
-                type="button"
-                $variant="secondary"
-                onClick={applyDesignPhoto}
-                disabled={imageUrl === DESIGN_PHOTO}
-              >
-                Design photo
-              </Button>
-            </Row>
-          </form>
-          <div>
-            imageAspectRatio:{" "}
-            {photo.failed ? (
-              <Muted>could not load the photo</Muted>
-            ) : photo.ratio === null ? (
-              <Muted>measuring…</Muted>
-            ) : (
-              <>
-                <Mono>{photo.ratio.toFixed(4)}</Mono> <Muted>(measured from the photo)</Muted>
-              </>
-            )}
-          </div>
-        </Card>
-
-        <Card>
-          <CardTitle>
-            imageFocus
-            <Button
-              type="button"
-              $variant="secondary"
-              onClick={() => setFocus(imageUrl === DESIGN_PHOTO ? DEFAULT_FOCUS : CENTRE)}
-            >
-              Reset
-            </Button>
-          </CardTitle>
-          <Note>Click or drag on the photo to mark the subject. The background frames it from that point.</Note>
-          {!photo.failed && <FocusPicker src={imageUrl} focus={focus} onChange={setFocus} />}
-          <Sliders>
-            {(["x", "y"] as const).map((axis) => (
-              <FocusSlider
-                key={axis}
-                axis={axis}
-                value={focus[axis]}
-                onChange={(value) => setFocus((previous) => ({ ...previous, [axis]: value }))}
-              />
-            ))}
-          </Sliders>
         </Card>
 
         <Card>
@@ -418,7 +503,15 @@ const App = () => {
         </Card>
 
         <Card>
-          <CardTitle>Usage</CardTitle>
+          <CardTitle>
+            Usage
+            {/* The clipboard API exists only in a secure context, which a phone on http://<LAN IP> isn't. */}
+            {window.isSecureContext && (
+              <Button type="button" $variant="secondary" onClick={copyUsage}>
+                {copied ? "Copied" : "Copy"}
+              </Button>
+            )}
+          </CardTitle>
           <Code>{usage}</Code>
           {declarations && (
             <>

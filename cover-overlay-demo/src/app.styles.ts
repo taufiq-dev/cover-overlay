@@ -1,5 +1,5 @@
 // app.styles.ts
-import styled, { createGlobalStyle } from "styled-components";
+import styled, { createGlobalStyle, css } from "styled-components";
 import CoverOverlay from "@cover-overlay";
 
 const color = {
@@ -76,6 +76,19 @@ export const Card = styled.section`
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+`;
+
+// The photo card also takes a dropped image file; the dashed outline shows it will accept one.
+export const DropCard = styled(Card)<{ $dropping: boolean }>`
+  outline: 2px dashed transparent;
+  outline-offset: -6px;
+
+  ${({ $dropping }) =>
+    $dropping &&
+    css`
+      outline-color: ${color.primary};
+      background: #f0f4ff;
+    `}
 `;
 
 export const CardTitle = styled.h2`
@@ -160,6 +173,39 @@ export const Button = styled.button<{ $variant?: "primary" | "secondary" }>`
   }
 `;
 
+// A file input dressed as the primary button. The input stays on top, transparent, so a click or
+// tap lands on it directly and it keeps its own keyboard focus.
+export const FileButton = styled.label`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid ${color.primary};
+  background: ${color.primary};
+  color: ${color.onPrimary};
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.8;
+  }
+
+  &:focus-within {
+    outline: 2px solid ${color.primary};
+    outline-offset: 2px;
+  }
+
+  input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+`;
+
 export const Mono = styled.code`
   font-family: ${mono};
   font-size: 12.5px;
@@ -187,9 +233,12 @@ export const Code = styled.pre`
 `;
 
 // Click or drag on the photo to move the focus point. touch-action: none keeps a drag on a phone
-// from scrolling the page instead.
+// from scrolling the page instead. The box shrink-wraps the image, so the focus percentages are
+// percentages of the photo even when a tall one is capped in height and narrower than the card.
 export const Picker = styled.div`
   position: relative;
+  align-self: center;
+  max-width: 100%;
   border-radius: 8px;
   overflow: hidden;
   cursor: crosshair;
@@ -199,8 +248,10 @@ export const Picker = styled.div`
 
   img {
     display: block;
-    width: 100%;
+    width: auto;
     height: auto;
+    max-width: 100%;
+    max-height: min(60vh, 520px);
     pointer-events: none;
   }
 `;
