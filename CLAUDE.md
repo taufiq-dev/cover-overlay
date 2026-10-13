@@ -50,7 +50,9 @@ Layout changes need a look in a browser on both sides of the 768px breakpoint (`
   `168fr | CONTENT_COLUMN | 638fr`. `CONTENT_COLUMN` is `min(634px, 634/1440 of the page)`, so
   below 1440px the cards, both gaps and the side title keep the design's proportions, and above
   it only the gaps grow. The background derives the empty right-hand area from the same
-  expression. On mobile, the focus point's vertical position is computed from the title's padding,
+  expression. The mobile grid and the cards' own grid (`Content`) have one explicit
+  `minmax(0, 1fr)` column: an implicit, auto-sized one grows to fit a host card that is wide
+  but allowed to shrink (`width: 634px; max-width: 100%`), pushing it over the side title. On mobile, the focus point's vertical position is computed from the title's padding,
   font size, line height and line count. **Changing the title's typography moves the photo.**
 - **Focus points.** `imageFocus` becomes `--cover-focus-x/y` (desktop) and `imageFocusMobile`
   becomes `--cover-mobile-focus-x/y` (mobile, centred across the screen). `index.tsx` resolves

@@ -18,8 +18,11 @@ export const Wrapper = styled.div`
 `;
 
 export const Layout = styled.div<VariantProps>`
-  /* Mobile: title on top, cards below, ${LAYOUT.stackGap} apart. */
+  /* Mobile: title on top, cards below, ${LAYOUT.stackGap} apart. One explicit column: the
+     implicit one is auto-sized, so a card that is wide but allowed to shrink (say width: 634px;
+     max-width: 100%) would widen it past the screen instead of shrinking. */
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   row-gap: ${LAYOUT.stackGap};
   padding: 0 ${LAYOUT.mobileGutter} 2.5rem;
 
@@ -78,6 +81,10 @@ export const Title = styled.h1<VariantProps>`
 
 export const Content = styled.div<VariantProps>`
   display: grid;
+  /* Cards fill the column and shrink with it. An auto-sized column would grow to fit a card's
+     own width instead, pushing it over the side title on desktop. A card that cannot shrink
+     (a fixed width or min-width) still overflows: the column's width is set by the layout. */
+  grid-template-columns: minmax(0, 1fr);
   gap: ${LAYOUT.stackGap};
   min-width: 0;
 
