@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import styled, { css } from "styled-components";
 
 import { LAYOUT, MOBILE_TITLE, desktopQuery } from "./constants";
-import { easedRamp } from "./easedRamp";
+import { easedRamp } from "./eased-ramp";
 import { OVERLAY_TYPE, type FocusPoint, type OverlayType } from "./types";
 
 /**

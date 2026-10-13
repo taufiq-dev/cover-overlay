@@ -11,7 +11,7 @@ export default defineConfig({
   html: { title: "cover-overlay demo" },
   server: { host: "0.0.0.0", port: 3002 },
   resolve: {
-    alias: { "@cover-overlay": path.resolve(import.meta.dirname, "../components/CoverOverlay") },
+    alias: { "@cover-overlay": path.resolve(import.meta.dirname, "../components/cover-overlay") },
   },
   tools: {
     rspack: {

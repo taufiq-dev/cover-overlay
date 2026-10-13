@@ -12,7 +12,7 @@ always on top), desktop `TITLE_SIDE`, and desktop `TITLE_TOP`. `README.md` descr
 ## Layout
 
 ```
-components/CoverOverlay/   the component. Plain folder: no package.json, no node_modules, no build step
+components/cover-overlay/  the component. Plain folder: no package.json, no node_modules, no build step
 cover-overlay-demo/        rsbuild app that exercises it; also where it is type-checked
 ```
 
@@ -46,7 +46,7 @@ Layout changes need a look in a browser on both sides of the 768px breakpoint (`
   (`position: fixed; z-index: -1`) sits above the page's own background but below the cards. The
   photo stays put while the cards scroll over it.
 - **Shared geometry.** `LAYOUT` and `MOBILE_TITLE` in `constants.ts` drive both the page grid
-  (`styles.ts`) and the background (`CoverBackground.tsx`). The desktop grid is
+  (`styles.ts`) and the background (`cover-background.tsx`). The desktop grid is
   `168fr | 634px | 638fr`, and the background derives the empty right-hand area from the same
   ratio. On mobile, the subject's vertical position is computed from the title's padding,
   font size, line height and line count. **Changing the title's typography moves the photo.**

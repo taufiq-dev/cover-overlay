@@ -1,5 +1,5 @@
 import { DEFAULT_ASPECT_RATIO, DEFAULT_FOCUS } from "./constants";
-import { CoverBackground } from "./CoverBackground";
+import { CoverBackground } from "./cover-background";
 import { Content, Layout, Title, Wrapper } from "./styles";
 import { OVERLAY_TYPE, type CoverOverlayProps } from "./types";
 

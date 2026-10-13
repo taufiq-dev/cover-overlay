@@ -12,7 +12,7 @@ the photo (`imageFocus`), so any photo can be framed the same way.
   title above the cards.
 
 ```
-components/CoverOverlay/   the component. Plain folder: no build step, no dependencies of its own
+components/cover-overlay/  the component. Plain folder: no build step, no dependencies of its own
 cover-overlay-demo/        an rsbuild app to exercise it, on desktop or a phone
 ```
 
@@ -30,7 +30,7 @@ The demo page is itself a `<CoverOverlay>`, and its cards are the controls. You 
 - switch `titlePosition`, edit `title`, and load any photo URL (its aspect ratio is measured);
 - set `imageFocus` by clicking or dragging on the photo;
 - tune the custom properties the background is framed with, starting from the component's own
-  values, and copy the changed ones back into `CoverBackground.tsx`;
+  values, and copy the changed ones back into `cover-background.tsx`;
 - toggle the app header and change `--cover-header-height`, and add filler cards to make the page
   scroll.
 

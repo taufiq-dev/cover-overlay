@@ -12,8 +12,8 @@
     "noEmit": true,
     "types": [],
     "paths": {
-      "@cover-overlay": ["../components/CoverOverlay"],
-      "@cover-overlay/*": ["../components/CoverOverlay/*"],
+      "@cover-overlay": ["../components/cover-overlay"],
+      "@cover-overlay/*": ["../components/cover-overlay/*"],
       // ../components has no node_modules; point its bare imports at this app's.
       "react": ["./node_modules/@types/react"],
       "react/*": ["./node_modules/@types/react/*"],

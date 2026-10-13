@@ -422,7 +422,7 @@ const App = () => {
           <Code>{usage}</Code>
           {declarations && (
             <>
-              <Note>Changed tuning values — the defaults on the background layer in CoverBackground.tsx:</Note>
+              <Note>Changed tuning values — the defaults on the background layer in cover-background.tsx:</Note>
               <Code>{declarations}</Code>
             </>
           )}
