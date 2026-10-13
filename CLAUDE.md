@@ -59,14 +59,18 @@ Layout changes need a look in a browser on both sides of the 768px breakpoint (`
   `translate(-focus)` and `object-position: focus`, which use the same percentages, so the
   point lands in the same place whether or not `object-fit: cover` crops it.
 - **Mobile band height** is derived from `imageAspectRatio` and the mobile focus's y
-  (`--cover-below-focus`), so the band ends exactly at the photo's bottom edge and the fade lands
-  on the photo, not on empty space. A wrong aspect ratio shows up as a band that is too short or
-  too long.
-- **Per-photo values are props; layout values are knobs.** The focus points, `imageZoomMobile`
-  and `imageShiftUpMobile` belong to a photo, so they are props, set as inline custom properties
-  on `Layer` (defaults in `constants.ts`). Tuning knobs (`--cover-zoom`, `--cover-fade-width`,
-  `--cover-mobile-fade-end`, …) are declared in `Layer`'s CSS, not on an ancestor, so a host page
-  can't override them by inheritance. The exception is `--cover-header-height`, which is read
+  (`--cover-below-focus`), so the band ends exactly at the photo's bottom edge. A wrong aspect
+  ratio shows up as a band that is too short or too long.
+- **Mobile fade** is `FadeBands`: `fadeBandsMobile` equal divs (`data-cover-band="1…N"`) filling
+  the photo band. Bands 1…`fadeBlackAtBandMobile` each paint a slice of one eased curve
+  (`easedSlice()`), from transparent to `fadeColorMobile`; later bands are solid. Its height is
+  the photo's, so the fade always completes on the photo and never leaves a hard edge. Below the
+  band the layer's mobile background is the same colour, so the last band runs into it.
+- **Per-photo values are props; layout values are knobs.** The focus points, the mobile zoom and
+  shift, and the mobile fade belong to a photo, so they are props, set as inline custom properties
+  on `Layer` or as the fade bands' styles (defaults in `constants.ts`). Tuning knobs
+  (`--cover-zoom`, `--cover-subject-top`, `--cover-fade-width`, …) are declared in `Layer`'s CSS,
+  not on an ancestor, so a host page can't override them by inheritance. The exception is `--cover-header-height`, which is read
   through a fallback. The desktop knobs only affect `TITLE_SIDE`; `TITLE_TOP` is a plain
   full-bleed `object-fit: cover`.
 - **`easedRamp()`** builds a 16-stop eased gradient. It is used both as a `mask-image` (where alpha

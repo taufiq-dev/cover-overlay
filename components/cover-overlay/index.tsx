@@ -1,5 +1,8 @@
 import {
   DEFAULT_ASPECT_RATIO,
+  DEFAULT_FADE_BANDS_MOBILE,
+  DEFAULT_FADE_BLACK_AT_BAND_MOBILE,
+  DEFAULT_FADE_COLOR_MOBILE,
   DEFAULT_FOCUS,
   DEFAULT_FOCUS_MOBILE,
   DEFAULT_SHIFT_UP_MOBILE,
@@ -23,6 +26,9 @@ const CoverOverlay = ({
   imageFocusMobile,
   imageZoomMobile = DEFAULT_ZOOM_MOBILE,
   imageShiftUpMobile = DEFAULT_SHIFT_UP_MOBILE,
+  fadeBandsMobile = DEFAULT_FADE_BANDS_MOBILE,
+  fadeBlackAtBandMobile = DEFAULT_FADE_BLACK_AT_BAND_MOBILE,
+  fadeColorMobile = DEFAULT_FADE_COLOR_MOBILE,
   imageAspectRatio = DEFAULT_ASPECT_RATIO,
   title,
   children,
@@ -38,6 +44,9 @@ const CoverOverlay = ({
       focusMobile={imageFocusMobile ?? imageFocus ?? DEFAULT_FOCUS_MOBILE}
       zoomMobile={imageZoomMobile}
       shiftUpMobile={imageShiftUpMobile}
+      fadeBandsMobile={fadeBandsMobile}
+      fadeBlackAtBandMobile={fadeBlackAtBandMobile}
+      fadeColorMobile={fadeColorMobile}
       aspectRatio={imageAspectRatio}
       titlePosition={titlePosition}
     />

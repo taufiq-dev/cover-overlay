@@ -58,3 +58,16 @@ export const DEFAULT_ASPECT_RATIO = 2800 / 1863;
 export const DEFAULT_ZOOM_MOBILE = 1.8;
 /** Moves the mobile photo up from the title's centre (negative: down). Any CSS length. */
 export const DEFAULT_SHIFT_UP_MOBILE = "1.5rem";
+
+/**
+ * The mobile fade: the photo split into 5 equal bands, full black at the bottom of the 4th, so
+ * 80% of the way down. On a 390px phone that is about where the old 7rem fade ended, and it now
+ * scales with the photo instead of being a fixed length.
+ */
+export const DEFAULT_FADE_BANDS_MOBILE = 5;
+export const DEFAULT_FADE_BLACK_AT_BAND_MOBILE = 4;
+/**
+ * The colour the mobile fade ends in, which also fills the screen below the photo: the design's
+ * black, the same as the desktop background's base. Any CSS colour.
+ */
+export const DEFAULT_FADE_COLOR_MOBILE = "#0d0d0d";

@@ -6,7 +6,9 @@ so any photo can be framed the same way: `imageFocus` on desktop, and optionally
 `imageFocusMobile` to art-direct phones.
 
 - **Mobile** (< 768px): a photo band under the app header, with the mobile focus point centred
-  behind the title, fading to black. The title always stacks on top of the cards.
+  behind the title. A fade of equal bands over the photo runs from clear to black (or any colour)
+  by a chosen band, so it always finishes on the photo. The title always stacks on top of the
+  cards.
 - **Desktop, `TITLE_SIDE`**: the photo fills the empty area right of the cards, with the subject
   centred in it, and fades in from behind the cards' right edge.
 - **Desktop, `TITLE_TOP`**: a full-bleed photo under a top-to-bottom darkening overlay, with the
@@ -30,7 +32,8 @@ The demo page is itself a `<CoverOverlay>`, and its cards are the controls. You 
 
 - switch `titlePosition`, edit `title`, and load any photo URL (its aspect ratio is measured);
 - upload or drop any photo, then set `imageFocus`, and optionally a separate `imageFocusMobile`,
-  by clicking or dragging on it, and adjust `imageZoomMobile` and `imageShiftUpMobile`;
+  by clicking or dragging on it, and adjust the mobile zoom, shift and fade bands (with an outline
+  toggle to see the bands);
 - tune the custom properties the background is framed with, starting from the component's own
   values, and copy the changed ones back into `cover-background.tsx`;
 - toggle the app header and change `--cover-header-height`, and add filler cards to make the page
@@ -58,6 +61,9 @@ pnpm run deploy   # builds, then wrangler deploy
   imageFocusMobile={{ x: 63.5, y: 80 }} // optional: lands mid-screen on phones (default: imageFocus)
   imageZoomMobile={1.8}                 // optional: photo width on phones, × the screen width
   imageShiftUpMobile="1.5rem"           // optional: moves the phone photo up (negative: down)
+  fadeBandsMobile={5}                   // optional: the phone fade splits the photo into 5 bands…
+  fadeBlackAtBandMobile={4}             // …and is fully faded by the bottom of the 4th
+  fadeColorMobile="#0d0d0d"             // optional: the colour it fades to
   imageAspectRatio={2800 / 1863}        // sizes the mobile band
   title="Welcome aboard"
   titlePosition={OVERLAY_TYPE.TITLE_SIDE}

@@ -20,6 +20,9 @@ import { OVERLAY_TYPE, type FocusPoint, type OverlayType } from "@cover-overlay"
 import {
   COVER_BREAKPOINT,
   DEFAULT_FOCUS,
+  DEFAULT_FADE_BANDS_MOBILE,
+  DEFAULT_FADE_BLACK_AT_BAND_MOBILE,
+  DEFAULT_FADE_COLOR_MOBILE,
   DEFAULT_FOCUS_MOBILE,
   DEFAULT_SHIFT_UP_MOBILE,
   DEFAULT_ZOOM_MOBILE,
@@ -27,6 +30,7 @@ import {
 } from "@cover-overlay/constants";
 import {
   AppHeader,
+  BandOutlines,
   Button,
   Card,
   CardTitle,
@@ -82,13 +86,6 @@ const KNOB_GROUPS: { label: string; knobs: Knob[] }[] = [
       { name: "--cover-zoom", unit: "", min: 1, max: 3, step: 0.01 },
       { name: "--cover-subject-top", unit: "%", min: 0, max: 100, step: 0.1 },
       { name: "--cover-fade-width", unit: "rem", min: 0, max: 60, step: 0.5 },
-    ],
-  },
-  {
-    label: "Mobile",
-    knobs: [
-      { name: "--cover-mobile-fade-start", unit: "rem", min: 0, max: 20, step: 0.25 },
-      { name: "--cover-mobile-fade-end", unit: "rem", min: 0, max: 20, step: 0.25 },
     ],
   },
 ];
@@ -299,6 +296,10 @@ const App = () => {
   const [editing, setEditing] = useState<"desktop" | "mobile">(isDesktop ? "desktop" : "mobile");
   const [zoomMobile, setZoomMobile] = useState(DEFAULT_ZOOM_MOBILE);
   const [shiftUpMobile, setShiftUpMobile] = useState(DEFAULT_SHIFT_UP_REM);
+  const [fadeBands, setFadeBands] = useState(DEFAULT_FADE_BANDS_MOBILE);
+  const [fadeBlackAt, setFadeBlackAt] = useState(DEFAULT_FADE_BLACK_AT_BAND_MOBILE);
+  const [fadeColor, setFadeColor] = useState(DEFAULT_FADE_COLOR_MOBILE);
+  const [outlineBands, setOutlineBands] = useState(false);
   const [headerOn, setHeaderOn] = useState(true);
   const [headerHeight, setHeaderHeight] = useState(56);
   const [fillerCards, setFillerCards] = useState(2);
@@ -330,6 +331,9 @@ const App = () => {
   const resetMobileFraming = () => {
     setZoomMobile(DEFAULT_ZOOM_MOBILE);
     setShiftUpMobile(DEFAULT_SHIFT_UP_REM);
+    setFadeBands(DEFAULT_FADE_BANDS_MOBILE);
+    setFadeBlackAt(DEFAULT_FADE_BLACK_AT_BAND_MOBILE);
+    setFadeColor(DEFAULT_FADE_COLOR_MOBILE);
   };
 
   const resetFraming = () => {
@@ -392,6 +396,9 @@ const App = () => {
     focusMobile && `  imageFocusMobile={{ x: ${focusMobile.x}, y: ${focusMobile.y} }}`,
     zoomMobile !== DEFAULT_ZOOM_MOBILE && `  imageZoomMobile={${zoomMobile}}`,
     shiftUpMobile !== DEFAULT_SHIFT_UP_REM && `  imageShiftUpMobile="${shiftUpMobile}rem"`,
+    fadeBands !== DEFAULT_FADE_BANDS_MOBILE && `  fadeBandsMobile={${fadeBands}}`,
+    fadeBlackAt !== DEFAULT_FADE_BLACK_AT_BAND_MOBILE && `  fadeBlackAtBandMobile={${fadeBlackAt}}`,
+    fadeColor !== DEFAULT_FADE_COLOR_MOBILE && `  fadeColorMobile="${fadeColor}"`,
     aspectRatio !== null && `  imageAspectRatio={${+aspectRatio.toFixed(4)}}`,
     title && `  title=${JSON.stringify(title)}`,
     `  titlePosition={OVERLAY_TYPE.${titlePosition === OVERLAY_TYPE.TITLE_SIDE ? "TITLE_SIDE" : "TITLE_TOP"}}`,
@@ -415,6 +422,7 @@ const App = () => {
   return (
     <Shell style={shellVars}>
       <TuningStyle $declarations={declarations} />
+      {outlineBands && <BandOutlines />}
       {headerOn && <AppHeader>App header</AppHeader>}
 
       <Cover
@@ -423,6 +431,9 @@ const App = () => {
         imageFocusMobile={focusMobile ?? undefined}
         imageZoomMobile={zoomMobile}
         imageShiftUpMobile={`${shiftUpMobile}rem`}
+        fadeBandsMobile={fadeBands}
+        fadeBlackAtBandMobile={fadeBlackAt}
+        fadeColorMobile={fadeColor}
         imageAspectRatio={aspectRatio ?? undefined}
         title={title}
         titlePosition={titlePosition}
@@ -629,7 +640,55 @@ const App = () => {
               format={(value) => `${value}rem`}
               onChange={setShiftUpMobile}
             />
+            <GroupLabel>Mobile fade</GroupLabel>
+            <PropSlider
+              id="fade-bands-mobile"
+              label="fadeBandsMobile"
+              min={1}
+              max={12}
+              step={1}
+              value={fadeBands}
+              changed={fadeBands !== DEFAULT_FADE_BANDS_MOBILE}
+              format={(value) => `${value}`}
+              onChange={(value) => {
+                setFadeBands(value);
+                // The black band has to be one of the bands.
+                setFadeBlackAt((previous) => Math.min(previous, value));
+              }}
+            />
+            <PropSlider
+              id="fade-black-at-band-mobile"
+              label="fadeBlackAtBandMobile"
+              min={1}
+              max={fadeBands}
+              step={1}
+              value={fadeBlackAt}
+              changed={fadeBlackAt !== DEFAULT_FADE_BLACK_AT_BAND_MOBILE}
+              format={(value) => `${value} / ${fadeBands}`}
+              onChange={setFadeBlackAt}
+            />
+            <KnobLabel htmlFor="fade-color-mobile" $changed={fadeColor !== DEFAULT_FADE_COLOR_MOBILE}>
+              fadeColorMobile
+            </KnobLabel>
+            <input
+              id="fade-color-mobile"
+              type="color"
+              value={fadeColor}
+              onChange={(event) => setFadeColor(event.target.value)}
+            />
+            <output htmlFor="fade-color-mobile">{fadeColor}</output>
           </Sliders>
+          <Row>
+            <Field>
+              <input
+                type="checkbox"
+                checked={outlineBands}
+                onChange={(event) => setOutlineBands(event.target.checked)}
+              />
+              Outline bands
+            </Field>
+            {isDesktop && <Muted>The fade bands show below {COVER_BREAKPOINT}px.</Muted>}
+          </Row>
         </DropCard>
 
         <Card>

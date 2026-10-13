@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import styled, { css } from "styled-components";
 
 import { CONTENT_COLUMN, LAYOUT, MOBILE_TITLE, desktopQuery } from "./constants";
-import { easedRamp } from "./eased-ramp";
+import { easedRamp, easedSlice } from "./eased-ramp";
 import { OVERLAY_TYPE, type FocusPoint, type OverlayType } from "./types";
 
 /**
@@ -14,8 +14,9 @@ import { OVERLAY_TYPE, type FocusPoint, type OverlayType } from "./types";
  * --cover-mobile-focus-x / -y on mobile, so any photo can be framed the same way and
  * art-directed separately for phones.
  *
- * - Mobile: a photo band under the app header, the subject behind the title, the band
- *   fading to black towards the bottom.
+ * - Mobile: a photo band under the app header, the subject behind the title. Over it, the
+ *   fade: the band split into equal slices, clear at the top, eased into the fade colour by
+ *   the bottom of a chosen slice and solid below it, so the photo always fades out on itself.
  * - Desktop, title on the side: the photo fills the empty area right of the cards with
  *   the subject centred in it. It is hidden behind the cards and fades in with an eased
  *   mask centred on their right edge, under a left-to-right darkening overlay.
@@ -34,6 +35,9 @@ type CoverBackgroundProps = {
   focusMobile: FocusPoint;
   zoomMobile: number;
   shiftUpMobile: string;
+  fadeBandsMobile: number;
+  fadeBlackAtBandMobile: number;
+  fadeColorMobile: string;
   aspectRatio: number;
   titlePosition: OverlayType;
 };
@@ -44,9 +48,16 @@ export const CoverBackground = ({
   focusMobile,
   zoomMobile,
   shiftUpMobile,
+  fadeBandsMobile,
+  fadeBlackAtBandMobile,
+  fadeColorMobile,
   aspectRatio,
   titlePosition,
 }: CoverBackgroundProps) => {
+  // Whole bands only, at least one, and the black band among them.
+  const bandCount = Math.max(1, Math.round(fadeBandsMobile));
+  const blackAt = Math.min(bandCount, Math.max(1, Math.round(fadeBlackAtBandMobile)));
+
   const vars: CustomProperties = {
     "--cover-focus-x": `${focus.x}%`,
     "--cover-focus-y": `${focus.y}%`,
@@ -54,6 +65,7 @@ export const CoverBackground = ({
     "--cover-mobile-focus-y": `${focusMobile.y}%`,
     "--cover-mobile-zoom": `${zoomMobile}`,
     "--cover-mobile-shift-up": shiftUpMobile,
+    "--cover-mobile-fade-color": fadeColorMobile,
     /* Photo height below the mobile focus point, as a fraction of the photo's width. */
     "--cover-below-focus": `${+((1 - focusMobile.y / 100) / aspectRatio).toFixed(4)}`,
   };
@@ -72,6 +84,26 @@ export const CoverBackground = ({
           // Likely the LCP element; don't lazy-load it.
           fetchPriority="high"
         />
+        <FadeBands>
+          {Array.from({ length: bandCount }, (_, index) => (
+            <div
+              key={index}
+              data-cover-band={index + 1}
+              style={{
+                // The eased fade runs across bands 1…blackAt as one curve, each band drawing its
+                // own slice of it; every band after that is the solid end colour.
+                background:
+                  index < blackAt
+                    ? easedSlice({
+                        from: index / blackAt,
+                        to: (index + 1) / blackAt,
+                        color: "var(--cover-mobile-fade-color)",
+                      })
+                    : "var(--cover-mobile-fade-color)",
+              }}
+            />
+          ))}
+        </FadeBands>
       </Panel>
       <Scrim $titlePosition={titlePosition} />
     </Layer>
@@ -111,23 +143,24 @@ const Layer = styled.div`
      photo, not to the layout. */
   /* Band top → the mobile focus point: behind the title, minus the shift. */
   --cover-mobile-subject-top: calc(${MOBILE_SUBJECT_TOP}px - var(--cover-mobile-shift-up));
-  /* Fade to black, measured from the band's top: clear until --cover-mobile-fade-start,
-     fully black from --cover-mobile-fade-end down (eased, so no hard edge). */
-  --cover-mobile-fade-start: 0rem;
-  --cover-mobile-fade-end: 7rem;
-
   position: fixed;
   inset: 0;
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
-  background-color: var(--cover-base);
+  /* Mobile: below the photo band the screen is the fade's end colour, so the last band runs
+     straight into it. */
+  background-color: var(--cover-mobile-fade-color);
+
+  @media ${desktopQuery} {
+    background-color: var(--cover-base);
+  }
 `;
 
 const Panel = styled.div<VariantProps>`
   /* Mobile: a band whose height ends exactly at the bottom of the photo, so the subject
-     sits --cover-mobile-subject-top below its top and the fade lands on the photo's
-     foreground, not on empty space. */
+     sits --cover-mobile-subject-top below its top. The fade bands fill it, so the fade is
+     always on the photo and reaches its end colour before the photo's bottom edge. */
   position: absolute;
   top: var(--cover-mobile-offset);
   left: 0;
@@ -136,13 +169,6 @@ const Panel = styled.div<VariantProps>`
     var(--cover-mobile-subject-top) + var(--cover-mobile-zoom) * 100vw * var(--cover-below-focus)
   );
   overflow: hidden;
-  /* Clear down to --cover-mobile-fade-start, black from --cover-mobile-fade-end. (The ramp
-     runs bottom-up, so its offset is the distance from the bottom to the fade's end.) */
-  mask-image: ${easedRamp({
-    direction: "to top",
-    offset: "(100% - var(--cover-mobile-fade-end))",
-    span: "(var(--cover-mobile-fade-end) - var(--cover-mobile-fade-start))",
-  })};
 
   @media ${desktopQuery} {
     top: 0;
@@ -168,7 +194,6 @@ const Panel = styled.div<VariantProps>`
         : css`
             left: 0;
             right: 0;
-            mask-image: none;
           `}
   }
 `;
@@ -216,6 +241,25 @@ const Photo = styled.img<VariantProps>`
             height: 100%;
             transform: none;
           `}
+  }
+`;
+
+/**
+ * The mobile fade, over the photo: equal bands stacked to the photo band's height, each painting
+ * its slice (see CoverBackground). Desktop frames the photo with masks and scrims instead.
+ */
+const FadeBands = styled.div`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+
+  > * {
+    flex: 1;
+  }
+
+  @media ${desktopQuery} {
+    display: none;
   }
 `;
 

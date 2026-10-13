@@ -33,6 +33,19 @@ export type CoverOverlayProps = {
    * the band's fade stays put. Defaults to "1.5rem".
    */
   imageShiftUpMobile?: string;
+  /** The mobile fade splits the photo, top to bottom, into this many equal bands. Defaults to 5. */
+  fadeBandsMobile?: number;
+  /**
+   * The band at whose bottom the mobile fade reaches full black (1 is the top band). The fade runs
+   * smoothly from transparent at the photo's top to there, and every band below stays black.
+   * Defaults to 4; kept within fadeBandsMobile.
+   */
+  fadeBlackAtBandMobile?: number;
+  /**
+   * The colour the mobile fade ends in, as any CSS colour; it also fills the screen below the
+   * photo. Defaults to the design's black, #0d0d0d.
+   */
+  fadeColorMobile?: string;
   /** Photo width / height. Needed to size the mobile band. Defaults to 3:2-ish (2800 / 1863). */
   imageAspectRatio?: number;
   title?: string;

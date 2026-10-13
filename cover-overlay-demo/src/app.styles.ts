@@ -42,6 +42,14 @@ export const TuningStyle = createGlobalStyle<{ $declarations: string }>`
   }
 `;
 
+// Draws the mobile fade's band divs, so their count and heights can be seen over the photo.
+export const BandOutlines = createGlobalStyle`
+  [data-cover-band] {
+    outline: 1px dashed rgb(255 255 255 / 0.7);
+    outline-offset: -1px;
+  }
+`;
+
 export const Shell = styled.div`
   min-height: 100%;
   display: flex;

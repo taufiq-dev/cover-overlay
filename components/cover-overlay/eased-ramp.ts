@@ -33,3 +33,43 @@ export const easedRamp = ({
     ([pos, alpha]) =>
       `rgb(${rgb} / ${+(alpha * max).toFixed(3)}) calc(${offset} + ${span} * ${pos / 100})`,
   ).join(", ")})`;
+
+/** The eased ramp's alpha at `t` (0 → 1 along it), interpolated between its stops. */
+export const easedAlpha = (t: number): number => {
+  const position = Math.min(1, Math.max(0, t)) * 100;
+  let previous: readonly [number, number] = [0, 0];
+  for (const stop of EASED_STOPS) {
+    const [stopPosition, stopAlpha] = stop;
+    if (position <= stopPosition) {
+      const [previousPosition, previousAlpha] = previous;
+      if (stopPosition === previousPosition) return stopAlpha;
+      return previousAlpha + ((position - previousPosition) / (stopPosition - previousPosition)) * (stopAlpha - previousAlpha);
+    }
+    previous = stop;
+  }
+  return 1;
+};
+
+type SliceOptions = {
+  /** Where the slice starts and ends along the whole ramp, 0 → 1. */
+  from: number;
+  to: number;
+  /** Any CSS colour, including a var(): mixed with transparent to get each stop's alpha. */
+  color: string;
+};
+
+/**
+ * One element's slice of an eased ramp that runs top to bottom across several stacked elements:
+ * a gradient over just that element, from the ramp's alpha at `from` to its alpha at `to`. It
+ * carries the ramp's own stops that fall inside the slice, so the curve keeps its shape, and its
+ * end alphas match the neighbouring slices', so stacked slices join without a seam.
+ */
+export const easedSlice = ({ from, to, color }: SliceOptions): string => {
+  const inside = EASED_STOPS.map(([position]) => position / 100).filter((t) => t > from && t < to);
+  return `linear-gradient(to bottom, ${[from, ...inside, to]
+    .map(
+      (t) =>
+        `color-mix(in srgb, ${color} ${+(easedAlpha(t) * 100).toFixed(1)}%, transparent) ${+(((t - from) / (to - from)) * 100).toFixed(2)}%`,
+    )
+    .join(", ")})`;
+};
