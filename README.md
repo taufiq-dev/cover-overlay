@@ -39,6 +39,8 @@ The demo page is itself a `<CoverOverlay>`, and its cards are the controls. You 
 - toggle the app header and change `--cover-header-height`, and add filler cards to make the page
   scroll.
 
+Every slider's value can also be typed: click the number, type, and press Enter (Escape cancels).
+
 The bundled photo is the design photo (Unsplash `Sq8rpq2KB7U`, 2800×1863 WebP), which
 `DEFAULT_FOCUS`, `DEFAULT_FOCUS_MOBILE` and `DEFAULT_ASPECT_RATIO` describe.
 

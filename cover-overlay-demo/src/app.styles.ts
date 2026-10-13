@@ -330,7 +330,9 @@ export const Sliders = styled.div`
     margin: 0;
   }
 
-  output {
+  output,
+  button,
+  input[type="text"] {
     font-family: ${mono};
     font-size: 12.5px;
     text-align: right;
@@ -345,6 +347,36 @@ export const Sliders = styled.div`
       margin-top: 4px;
     }
   }
+`;
+
+// A slider's value as text, clickable to type one instead.
+export const ValueButton = styled.button`
+  justify-self: end;
+  padding: 2px 4px;
+  margin-right: -4px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  cursor: text;
+  text-decoration: underline dotted ${color.textMuted};
+  text-underline-offset: 3px;
+
+  &:hover {
+    background: ${color.border};
+  }
+`;
+
+// Takes the value's place while it is typed, the same width as the column.
+export const ValueField = styled.input.attrs({ type: "text" })`
+  width: 100%;
+  min-width: 0;
+  padding: 1px 4px;
+  margin-right: -4px;
+  border: 1px solid ${color.primary};
+  border-radius: 4px;
+  background: ${color.surface};
+  color: inherit;
 `;
 
 // A knob whose value differs from the component's default.

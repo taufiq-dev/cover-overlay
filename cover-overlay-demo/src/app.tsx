@@ -54,6 +54,8 @@ import {
   Shell,
   Sliders,
   TuningStyle,
+  ValueButton,
+  ValueField,
   WideField,
 } from "./app.styles";
 
@@ -845,9 +847,98 @@ const PropSlider = ({
       value={value}
       onChange={(event) => onChange(Number(event.target.value))}
     />
-    <output htmlFor={id}>{format(value)}</output>
+    <ValueInput id={id} label={label} value={value} min={min} max={max} step={step} format={format} onChange={onChange} />
   </>
 );
+
+// Digits after the point in a slider step: 0.25 → 2, 1 → 0.
+const stepDecimals = (step: number): number => String(step).split(".")[1]?.length ?? 0;
+
+/**
+ * A slider's value, shown as text. Click it to type one instead: Enter, or leaving the field, sets
+ * it; Escape keeps the old one. A typed value can fall between the slider's steps, for precision,
+ * but is kept to its range and rounded to its step's decimals (so whole-number props stay whole).
+ */
+const ValueInput = ({
+  id,
+  label,
+  value,
+  min,
+  max,
+  step,
+  format,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: number | undefined;
+  min: number;
+  max: number;
+  step: number;
+  format: (value: number) => string;
+  onChange: (value: number) => void;
+}) => {
+  const [draft, setDraft] = useState<string | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  // Enter and Escape end the edit themselves; the blur that follows must not commit it again.
+  const settled = useRef(false);
+  const refocus = useRef(false);
+
+  useEffect(() => {
+    if (draft !== null || !refocus.current) return;
+    refocus.current = false;
+    buttonRef.current?.focus();
+  }, [draft]);
+
+  if (value === undefined) return <output htmlFor={id}>—</output>;
+
+  if (draft === null) {
+    return (
+      <ValueButton
+        ref={buttonRef}
+        type="button"
+        aria-label={`${label}: ${format(value)}. Edit`}
+        title="Click to type a value"
+        onClick={() => {
+          settled.current = false;
+          setDraft(String(value));
+        }}
+      >
+        {format(value)}
+      </ValueButton>
+    );
+  }
+
+  const end = (commit: boolean) => {
+    if (settled.current) return;
+    settled.current = true;
+    // parseFloat also takes a value typed with its unit, like "1.5rem" or "72%".
+    const typed = parseFloat(draft);
+    if (commit && Number.isFinite(typed)) {
+      onChange(+Math.min(max, Math.max(min, typed)).toFixed(stepDecimals(step)));
+    }
+    setDraft(null);
+  };
+
+  return (
+    <ValueField
+      // Rendered only on a click, to type into straight away.
+      autoFocus
+      aria-label={label}
+      inputMode="decimal"
+      value={draft}
+      onFocus={(event) => event.target.select()}
+      onChange={(event) => setDraft(event.target.value)}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== "Escape") return;
+        event.preventDefault();
+        refocus.current = true;
+        end(event.key === "Enter");
+      }}
+      onBlur={() => end(true)}
+    />
+  );
+};
 
 const KnobGroup = ({
   label,
@@ -907,7 +998,16 @@ const KnobRow = ({
         disabled={value === undefined}
         onChange={(event) => onChange(Number(event.target.value))}
       />
-      <output htmlFor={id}>{value === undefined ? "—" : formatKnob(value, knob.unit)}</output>
+      <ValueInput
+        id={id}
+        label={knob.name}
+        value={value}
+        min={knob.min}
+        max={knob.max}
+        step={knob.step}
+        format={(next) => formatKnob(next, knob.unit)}
+        onChange={onChange}
+      />
     </>
   );
 };
