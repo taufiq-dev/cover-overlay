@@ -61,14 +61,16 @@ Layout changes need a look in a browser on both sides of the 768px breakpoint (`
 - **Mobile band height** is derived from `imageAspectRatio` and the mobile focus's y
   (`--cover-below-focus`), so the band ends exactly at the photo's bottom edge. A wrong aspect
   ratio shows up as a band that is too short or too long.
-- **Mobile fade** is `FadeBands`: `fadeBandsMobile` equal divs (`data-cover-band="1…N"`) filling
-  the photo band. Bands 1…`fadeBlackAtBandMobile` each paint a slice of one eased curve
-  (`easedSlice()`), from transparent to `fadeColorMobile`; later bands are solid. Its height is
-  the photo's, so the fade always completes on the photo and never leaves a hard edge. Below the
-  band the layer's mobile background is the same colour, so the last band runs into it.
+- **Mobile fade** is `FadeBands`: one eased gradient (`easedFade()`) the photo band's height, from
+  transparent to `fadeColorMobile` by the bottom of band `fadeBlackAtBandMobile` of
+  `fadeBandsMobile`, solid below. Its height is the photo's, so the fade always completes on the
+  photo and never leaves a hard edge. Below the band the layer's mobile background is the same
+  colour, so the fade runs into it. The band divs inside (`data-cover-band="1…N"`) only mark the
+  bands and paint nothing: don't paint a slice per band, because Chrome leaves a light line where
+  two painted boxes meet mid-pixel (at a fractional device pixel ratio or browser zoom).
 - **Per-photo values are props; layout values are knobs.** The focus points, the mobile zoom and
   shift, and the mobile fade belong to a photo, so they are props, set as inline custom properties
-  on `Layer` or as the fade bands' styles (defaults in `constants.ts`). Tuning knobs
+  on `Layer` or as the fade's style (defaults in `constants.ts`). Tuning knobs
   (`--cover-zoom`, `--cover-subject-top`, `--cover-fade-width`, …) are declared in `Layer`'s CSS,
   not on an ancestor, so a host page can't override them by inheritance. The exception is `--cover-header-height`, which is read
   through a fallback. The desktop knobs only affect `TITLE_SIDE`; `TITLE_TOP` is a plain

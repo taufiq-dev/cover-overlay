@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import styled, { css } from "styled-components";
 
 import { CONTENT_COLUMN, LAYOUT, MOBILE_TITLE, desktopQuery } from "./constants";
-import { easedRamp, easedSlice } from "./eased-ramp";
+import { easedFade, easedRamp } from "./eased-ramp";
 import { OVERLAY_TYPE, type FocusPoint, type OverlayType } from "./types";
 
 /**
@@ -84,24 +84,20 @@ export const CoverBackground = ({
           // Likely the LCP element; don't lazy-load it.
           fetchPriority="high"
         />
-        <FadeBands>
+        <FadeBands
+          style={{
+            // One gradient over all the bands, reaching the end colour at the bottom of band
+            // blackAt. Not a slice per band: where two painted bands meet mid-pixel (Chrome at a
+            // fractional device pixel ratio or zoom), it leaves a light line.
+            background: easedFade({
+              color: "var(--cover-mobile-fade-color)",
+              end: blackAt / bandCount,
+            }),
+          }}
+        >
+          {/* Paint nothing; they mark the bands' bounds for a host or a debug outline. */}
           {Array.from({ length: bandCount }, (_, index) => (
-            <div
-              key={index}
-              data-cover-band={index + 1}
-              style={{
-                // The eased fade runs across bands 1…blackAt as one curve, each band drawing its
-                // own slice of it; every band after that is the solid end colour.
-                background:
-                  index < blackAt
-                    ? easedSlice({
-                        from: index / blackAt,
-                        to: (index + 1) / blackAt,
-                        color: "var(--cover-mobile-fade-color)",
-                      })
-                    : "var(--cover-mobile-fade-color)",
-              }}
-            />
+            <div key={index} data-cover-band={index + 1} />
           ))}
         </FadeBands>
       </Panel>
@@ -245,8 +241,8 @@ const Photo = styled.img<VariantProps>`
 `;
 
 /**
- * The mobile fade, over the photo: equal bands stacked to the photo band's height, each painting
- * its slice (see CoverBackground). Desktop frames the photo with masks and scrims instead.
+ * The mobile fade, over the photo: one gradient the photo band's height, over equal, empty band
+ * divs (see CoverBackground). Desktop frames the photo with masks and scrims instead.
  */
 const FadeBands = styled.div`
   position: absolute;
