@@ -1,0 +1,12 @@
+{
+  // A static-assets-only Worker: no server code, no backend. `assets.directory` is rsbuild's
+  // output, uploaded and served as-is.
+  "name": "cover-overlay-demo",
+  "compatibility_date": "2026-09-18",
+  "assets": { "directory": "./dist" }
+
+  // To deploy from your own machine, add
+  //   "account_id": "<id from `pnpm wrangler whoami`>"
+  // so wrangler picks the right account without prompting. Not a secret — it is in every
+  // dashboard URL — unlike an API token, which never belongs in the repo.
+}
