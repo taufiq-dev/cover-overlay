@@ -14,6 +14,7 @@ import {
   useSyncExternalStore,
   type CSSProperties,
   type FormEvent,
+  type PointerEvent,
 } from "react";
 import { OVERLAY_TYPE, type FocusPoint, type OverlayType } from "@cover-overlay";
 import {
@@ -173,11 +174,9 @@ type MarkedPoint = { point: FocusPoint; label: string; name: string };
 /**
  * Click anywhere on the photo to put the focus there, or drag to move it live. Pressing on the
  * dot itself picks it up where it was grabbed, so it follows the pointer without first jumping
- * to it. A drag is tracked on the window, not through pointer capture alone: capture can be
- * refused or dropped (and a native selection or drag gesture cancels it), which would leave the
- * dot stuck where it was pressed. So the drag keeps tracking outside the photo (clamped to its
- * edges) and ends wherever the button is released. With a separate mobile focus, the point not
- * being edited is drawn faded, for reference only.
+ * to it. The pointer is captured on press, so a drag keeps tracking outside the photo (clamped
+ * to its edges) and ends cleanly wherever the button is released. With a separate mobile
+ * focus, the point not being edited is drawn faded, for reference only.
  *
  * On a touch screen the photo must not swallow scrolling: it is wide and tall on a phone, and a
  * page that won't scroll over it feels stuck. So only the dot (with a finger-sized touch area,
@@ -196,49 +195,24 @@ const FocusPicker = ({
   onChange: (focus: FocusPoint) => void;
 }) => {
   const focus = active.point;
-  const pickerRef = useRef<HTMLDivElement>(null);
-  // The pointer being dragged, or null when no drag is on.
-  const [dragPointer, setDragPointer] = useState<number | null>(null);
-  const dragging = dragPointer !== null;
+  const [dragging, setDragging] = useState(false);
   // Pointer position relative to the dot's centre when it was grabbed; zero for a click elsewhere.
   const grabOffset = useRef({ x: 0, y: 0 });
   // A touch that started on the photo but off the dot, which may yet turn out to be a tap.
   const pendingTap = useRef<{ pointerId: number; x: number; y: number } | null>(null);
-  // The latest onChange, for the window listeners a drag installs once, at its start.
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
 
-  const place = (clientX: number, clientY: number) => {
-    const box = pickerRef.current?.getBoundingClientRect();
-    if (!box) return;
-    onChangeRef.current({
-      x: toPercent(clientX - grabOffset.current.x - box.left, box.width),
-      y: toPercent(clientY - grabOffset.current.y - box.top, box.height),
+  const move = (event: PointerEvent<HTMLDivElement>) => {
+    const box = event.currentTarget.getBoundingClientRect();
+    onChange({
+      x: toPercent(event.clientX - grabOffset.current.x - box.left, box.width),
+      y: toPercent(event.clientY - grabOffset.current.y - box.top, box.height),
     });
   };
 
-  useEffect(() => {
-    if (dragPointer === null) return;
-    const onMove = (event: globalThis.PointerEvent) => {
-      if (event.pointerId === dragPointer) place(event.clientX, event.clientY);
-    };
-    const onEnd = (event: globalThis.PointerEvent) => {
-      if (event.pointerId === dragPointer) setDragPointer(null);
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onEnd);
-    window.addEventListener("pointercancel", onEnd);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onEnd);
-      window.removeEventListener("pointercancel", onEnd);
-    };
-    // place reads only refs, so these listeners never go stale between moves.
-  }, [dragPointer]);
+  const endDrag = () => setDragging(false);
 
   return (
     <Picker
-      ref={pickerRef}
       $dragging={dragging}
       tabIndex={0}
       aria-label={`${active.name}: x ${focus.x}%, y ${focus.y}%. Arrow keys move it; hold Shift for larger steps.`}
@@ -257,34 +231,29 @@ const FocusPicker = ({
           pendingTap.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
           return;
         }
-        // Keep the browser from starting a text selection or native drag from this press, either
-        // of which would cancel the pointer mid-drag. That also skips the press's usual focus,
-        // so focus the picker here, for the arrow keys.
-        event.preventDefault();
-        event.currentTarget.focus({ preventScroll: true });
         grabOffset.current = onDot ? offset : { x: 0, y: 0 };
-        // Capture keeps the events coming to this element if the pointer leaves the window; the
-        // window listeners above do the tracking, so a refused capture costs nothing.
-        try {
-          event.currentTarget.setPointerCapture(event.pointerId);
-        } catch {
-          // Not an active pointer (a synthetic event, say): track it on the window anyway.
-        }
-        setDragPointer(event.pointerId);
-        place(event.clientX, event.clientY);
+        event.currentTarget.setPointerCapture(event.pointerId);
+        setDragging(true);
+        move(event);
+      }}
+      onPointerMove={(event) => {
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) move(event);
       }}
       onPointerUp={(event) => {
         const tap = pendingTap.current;
         pendingTap.current = null;
         if (tap?.pointerId === event.pointerId && Math.hypot(event.clientX - tap.x, event.clientY - tap.y) < TAP_SLOP) {
           grabOffset.current = { x: 0, y: 0 };
-          place(event.clientX, event.clientY);
+          move(event);
         }
+        endDrag();
       }}
       // The browser cancels a touch it has taken over for scrolling: not a tap, not a drag.
       onPointerCancel={() => {
         pendingTap.current = null;
+        endDrag();
       }}
+      onLostPointerCapture={endDrag}
       onKeyDown={(event) => {
         const arrow = ARROWS[event.key];
         if (!arrow) return;
