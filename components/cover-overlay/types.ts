@@ -16,7 +16,7 @@ export type CoverOverlayProps = {
   imageUrl: string;
   /** Where the subject is in the photo. Defaults to the design photo's subject. */
   imageFocus?: FocusPoint;
-  /** Photo width / height. Needed to size the mobile band. Defaults to 3:2-ish (2576 / 1714). */
+  /** Photo width / height. Needed to size the mobile band. Defaults to 3:2-ish (2800 / 1863). */
   imageAspectRatio?: number;
   title?: string;
   /** The cards. Stacked in the content column with a 16px gap. */

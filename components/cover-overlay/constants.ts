@@ -33,4 +33,4 @@ export const MOBILE_TITLE = {
 
 /** Defaults for the design photo (woman in yellow dress, Unsplash Sq8rpq2KB7U). */
 export const DEFAULT_FOCUS: FocusPoint = { x: 49.6, y: 80 };
-export const DEFAULT_ASPECT_RATIO = 2576 / 1714;
+export const DEFAULT_ASPECT_RATIO = 2800 / 1863;

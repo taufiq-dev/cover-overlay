@@ -53,7 +53,7 @@ pnpm run deploy   # builds, then wrangler deploy
 <CoverOverlay
   imageUrl={coverUrl}
   imageFocus={{ x: 49.6, y: 80 }}       // the subject, in % of the photo's width and height
-  imageAspectRatio={2576 / 1714}        // sizes the mobile band
+  imageAspectRatio={2800 / 1863}        // sizes the mobile band
   title="Welcome aboard"
   titlePosition={OVERLAY_TYPE.TITLE_SIDE}
 >
