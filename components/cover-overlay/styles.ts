@@ -57,7 +57,15 @@ export const Title = styled.h1<VariantProps>`
             /* In the empty area right of the cards. */
             grid-column: 3;
             grid-row: 1;
-            padding: 0 2rem;
+            padding: 0 3rem;
+            /* Two lines at most. The column narrows with the viewport (to ~10px of text at
+               768px), so a longer title is cut with an ellipsis rather than growing downwards.
+               The full text stays in the DOM for screen readers. -webkit-line-clamp is the
+               prefixed form every browser supports; it needs the -webkit-box display. */
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
           `
         : css`
             /* Above the cards, same column. */
