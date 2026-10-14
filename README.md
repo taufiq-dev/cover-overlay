@@ -65,7 +65,7 @@ pnpm run deploy   # builds, then wrangler deploy
   imageShiftUpMobile="1.5rem"             // optional: moves the phone photo up (negative: down)
   fadeBandsMobile={5}                     // optional: the phone fade splits the photo into 5 bands…
   fadeBlackAtBandMobile={4}               // …and is fully faded by the bottom of the 4th
-  fadeColorMobile="#0d0d0d"               // optional: the colour it fades to
+  fadeColorMobile="#000000"               // optional: the colour it fades to
   imageAspectRatio={2800 / 1863}          // sizes the mobile band
   title="Welcome aboard"
   titlePosition={OVERLAY_TYPE.TITLE_SIDE}

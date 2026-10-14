@@ -43,7 +43,7 @@ export type CoverOverlayProps = {
   fadeBlackAtBandMobile?: number;
   /**
    * The colour the mobile fade ends in, as any CSS colour; it also fills the screen below the
-   * photo. Defaults to the design's black, #0d0d0d.
+   * photo. Defaults to black, #000000.
    */
   fadeColorMobile?: string;
   /** Photo width / height. Needed to size the mobile band. Defaults to 3:2-ish (2800 / 1863). */

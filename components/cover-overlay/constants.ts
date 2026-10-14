@@ -68,7 +68,7 @@ export const DEFAULT_SHIFT_UP_MOBILE = "1.5rem";
 export const DEFAULT_FADE_BANDS_MOBILE = 5;
 export const DEFAULT_FADE_BLACK_AT_BAND_MOBILE = 4;
 /**
- * The colour the mobile fade ends in, which also fills the screen below the photo: the design's
- * black, the same as the desktop background's base. Any CSS colour.
+ * The colour the mobile fade ends in, which also fills the screen below the photo: pure black.
+ * Any CSS colour.
  */
-export const DEFAULT_FADE_COLOR_MOBILE = "#0d0d0d";
+export const DEFAULT_FADE_COLOR_MOBILE = "#000000";
